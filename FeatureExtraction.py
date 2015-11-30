@@ -1,4 +1,5 @@
 from __future__ import print_function
+#List of files that will store image features
 log1 = open("c:\\AsymmetryIndex.txt", "w")
 log2 = open("c:\\CompactIndex.txt", "w")
 log3 = open("c:\\DiameterIndex.txt", "w")
@@ -10,13 +11,15 @@ import numpy as np
 import cv2
 BLUE = [255,0,0]
 
-mypath = os.path.join('c:\\testSet')
+#choose if train or test set
+mypath = os.path.join('c:\\trainst')
+#mypath = os.path.join('c:\\testSet')
 images = list()
 for item in os.listdir(mypath):
-    #if '.jpg' in item:  this could be more correctly done with os.path.splitext
         image = cv2.imread(os.path.join(mypath, item))
         if image is not None:
             images.append(image)
+            #resize image by half
             small = cv2.resize(image, (0,0), fx=0.5, fy=0.5)
             constant= cv2.copyMakeBorder(small,3,3,3,3,cv2.BORDER_CONSTANT,value=BLUE)
             imgray = cv2.cvtColor(constant,cv2.COLOR_BGR2GRAY)
@@ -24,21 +27,22 @@ for item in os.listdir(mypath):
             cnt = contours[0]
             cv2.drawContours(constant, [cnt], 0, (50,50,100), 3)
             moments = cv2.moments(cnt)
-            areaim = cv2.contourArea(cnt)
-
-
             imgray1 = cv2.cvtColor(small,cv2.COLOR_BGR2GRAY)
             contours, hierarchy = cv2.findContours(imgray1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             cnt1 = contours[0]
             cv2.drawContours(small, [cnt1], 0, (255,55,0), 3)
+            
+            #area of lesion
             area = cv2.contourArea(cnt1)
+            #area if image
+            areaim = cv2.contourArea(cnt)
+            #difference
             diff = areaim - area
-            perimeter = cv2.arcLength(cnt1,True)
-
-            #calculate asymmetry
+            #asymmetry index
             asymmetryIndex = (diff/areaim)*100
 
             #calculate compactness
+            perimeter = cv2.arcLength(cnt1,True)
             compactIndex = (perimeter**2)/(4*math.pi*area)
 
             #calculate Equivalent Diameter, which is the diameter of the circle whose area is same as the contour area.
@@ -54,16 +58,8 @@ for item in os.listdir(mypath):
             rect_area = w*h
             extentIndex = float(area)/rect_area
 
-            print(item,"%.2f" % asymmetryIndex)
-            """print("%.2f" % compactIndex, file = log2)
+            print("%.2f" % asymmetryIndex, file = log1)
+            print("%.2f" % compactIndex, file = log2)
             print("%.2f" % diameterIndex, file = log3)
             print("%.2f" % solidityIndex, file = log4)
-            print("%.2f" % extentIndex, file = log5)"""
-
-
-            """cv2.imshow(item ,small)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()"""
-            #print area
-            #print 'perimeter:'
-            #print perimeter
+            print("%.2f" % extentIndex, file = log5)
